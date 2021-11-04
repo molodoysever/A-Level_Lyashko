@@ -38,6 +38,6 @@ public class Task5 {
             } else {
                 System.out.println("Calculation finished ^_^ ");
             }
-        } while (mean != '0') ;
+        } while (mean != '0');
     }
 }
