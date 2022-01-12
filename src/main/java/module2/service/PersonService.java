@@ -1,8 +1,6 @@
 package module2.service;
 
-import module2.Util;
 import module2.model.Customer;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -18,7 +16,7 @@ public class PersonService {
         int id;
         if (customerNumb.size() != 0) {
             do {
-                id = Util.getRandomInt(min, max);
+                id = random.nextInt(min, max);
                 for (Integer integer : customerNumb) {
                     if (integer == id) {
                         flag = true;
@@ -29,12 +27,12 @@ public class PersonService {
                 }
             } while (flag);
         } else {
-            id = Util.getRandomInt(min, max);
+            id = random.nextInt(min, max);
         }
         customerNumb.add(id);
-        int minBoundAge = 10;
-        int maxBoundAge = 100;
-        return new Customer(id, getRandomEmail(), Util.getRandomInt(minBoundAge, maxBoundAge));
+        int minAge = 10;
+        int maxAge = 100;
+        return new Customer(id, getRandomEmail(), random.nextInt(minAge, maxAge));
     }
 
     private String getRandomEmail() {

@@ -2,23 +2,29 @@ package module2.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import lombok.ToString;
+
+import java.util.List;
 
 @Getter
 @Setter
+@ToString
 
 public class Invoice {
     private Customer customer;
     private String type;
-    private Set <Product> productSet = new LinkedHashSet<>();
+    private List <Product> list;
 
-    @Override
-    public String toString() {
-        return "Invoice{" +
-                "customer=" + customer +
-                ", type='" + type + '\'' +
-                ", productSet=" + productSet +
-                '}';
+    public Invoice(List<Product> list, int limit, Customer customer) {
+        this.list = list;
+        this.customer = customer;
+        final int totalPrice = list.stream()
+                .mapToInt(Product::getPrice)
+                .sum();
+        if (totalPrice < limit) {
+            type = "retail";
+        } else {
+            type = "wholesale";
+        }
     }
 }

@@ -1,147 +1,74 @@
 package module2.service;
 
+import com.opencsv.CSVReader;
 import module2.IncorrectStringExc;
-import module2.Util;
-import module2.model.Invoice;
-import module2.model.Product;
-import module2.model.Telephone;
-import module2.model.Television;
-import java.io.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import module2.model.*;
 
-import static module2.Util.isBlank;
+import java.io.*;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class ShopService {
-    private final Map<LocalDateTime, Invoice> invoiceMap = new LinkedHashMap<>();
-    private final List<String> productsList = new ArrayList<>();
-    private final List<String> patternList = new ArrayList<>();
-    private final PersonService personService = new PersonService();
-    private String patternString;
-    private int limitRetail;
+    Random random = new Random();
 
-    public Map<LocalDateTime, Invoice> getInvoiceMap() {
-        return invoiceMap;
+    private List<List<String>> reader() throws IOException {
+        CSVReader reader = new CSVReader(new FileReader("src/main/resources/csv/catalog.csv"), ',', '"', 1);
+        String[] temp;
+        List<List<String>> list = new ArrayList<>();
+        while ((temp = reader.readNext()) != null) {
+            try {
+                checkLine(Arrays.asList(temp), list.size() + 1);
+                list.add(Arrays.asList(temp));
+            } catch (IncorrectStringExc exception) {
+                exception.printStackTrace();
+            }
+        }
+        return list;
     }
 
-    public void startShopService(String targetLogFile, int numberOfPurchase) throws IncorrectStringExc {
-        limitRetail = Util.getRandomInt(1000, 5000);
-        fillListOfProductsFromFile();
-        StringTokenizer tokenizer = new StringTokenizer(patternString, ",");
-        while (tokenizer.hasMoreTokens()) {
-            patternList.add(tokenizer.nextToken());
+    private Product parser(List<String> list) {
+        Product product;
+        if (list.get(0).equals("Telephone")) {
+            product = new Telephone(list.get(2));
+        } else {
+            product = new Television(list.get(5), list.get(3));
         }
-        for (int i = 0; i < numberOfPurchase; i++) {
-            Invoice invoice = getRandomInvoice();
-            LocalDateTime dateTime = LocalDateTime.now();
-            invoiceMap.put(dateTime, invoice);
-            writeInvoiceToLogFile(invoice, targetLogFile, dateTime);
-        }
+        product.setSeries(list.get(1));
+        product.setScreenType(list.get(4));
+        product.setPrice(Integer.parseInt(list.get(6)));
+        return product;
     }
 
-    private void fillListOfProductsFromFile() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("csv/catalog.csv");
-        String line;
-        if (inputStream != null) {
-            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
-                patternString = bufferedReader.readLine();
-                while ((line = bufferedReader.readLine()) != null) {
-                    productsList.add(line);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+    private void checkLine(List<String> line, int lineNum) throws IncorrectStringExc {
+        for (String s : line) {
+            if (Objects.equals(s, "")) {
+                throw new IncorrectStringExc("line " + (lineNum + 1) + " is incorrect");
             }
         }
     }
 
-    private Invoice getRandomInvoice() throws IncorrectStringExc {
-        Invoice invoice = new Invoice();
-        int minQuantityProductsInInvoice = 1;
-        int maxQuantityProductsInInvoice = 5;
-        int quantityProductsInInvoice = Util.getRandomInt(minQuantityProductsInInvoice, maxQuantityProductsInInvoice);
-        for (int i = 0; i < quantityProductsInInvoice; i++) {
-            int randomProductIndex = Util.getRandomInt(0, productsList.size() - 1);
-            String randomProduct = productsList.get(randomProductIndex);
-            String[] productArray = randomProduct.split(",");
-            List<String> product = Arrays.asList(productArray);
-            Map<String, String> productMap = IntStream.range(0, patternList.size())
-                    .boxed()
-                    .collect(Collectors.toMap(patternList::get, product::get));
-            if (productMap.get("type").equals("Telephone")) {
-                invoice.getProductSet().add(getTelephone(productMap));
-            } else if (productMap.get("type").equals("Television")) {
-                invoice.getProductSet().add(getTelevision(productMap));
-            } else {
-                throw new IllegalStateException("Unknown product");
-            }
+    public Invoice createOrder(Customer customer, int limit) throws IOException {
+        List<List<String>> data = reader();
+        List<Product> products = new ArrayList<>();
+        for (int i = 0; i < random.nextInt(5) + 1; i++) {
+            products.add(parser(data.get(random.nextInt(data.size()))));
         }
-        invoice.setCustomer(personService.getNewCustomer());
-        if (getTotalPriceInvoice(invoice) <= limitRetail) {
-            invoice.setType("retail");
-        } else {
-            invoice.setType("wholesale");
-        }
-        return invoice;
+        String message = " " + customer + " " + products + " ";
+        createLogs(message);
+        return new Invoice(products, limit, customer);
     }
 
-    public int getTotalPriceInvoice(Invoice invoice) {
-        return invoice.getProductSet()
-                .stream()
-                .map(Product::getPrice)
-                .mapToInt(i -> i)
-                .sum();
-    }
-
-    private Telephone getTelephone(Map<String, String> productMap) throws IncorrectStringExc {
-        String series = productMap.get("series");
-        String model = productMap.get("model");
-        String screenType = productMap.get("screen type");
-        String priceString = productMap.get("price");
-        Telephone telephone;
-        if (isBlank(series) || isBlank(model)
-                || isBlank(screenType) || isBlank(priceString)) {
-            throw new IncorrectStringExc(series);
-        } else {
-            int price = Integer.parseInt(priceString);
-            telephone = new Telephone(series, screenType, price);
-            telephone.setModel(model);
-        }
-        return telephone;
-    }
-
-    private Television getTelevision(Map<String, String> productMap) throws IncorrectStringExc {
-        String series = productMap.get("series");
-        String diagonal = productMap.get("diagonal");
-        String screenType = productMap.get("screen type");
-        String country = productMap.get("country");
-        String priceString = productMap.get("price");
-        Television television;
-        if (isBlank(series) || isBlank(diagonal) || isBlank(screenType)
-                || isBlank(country) || isBlank(priceString)) {
-            throw new IncorrectStringExc(series);
-        } else {
-            int price = Integer.parseInt(priceString);
-            television = new Television(series, screenType, price);
-            television.setDiagonal(Integer.parseInt(diagonal));
-            television.setCountry(country);
-        }
-        return television;
-    }
-
-    private void writeInvoiceToLogFile(Invoice invoice, String targetLogFile, LocalDateTime dateTime) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy HH:mm:ss:SSS");
-        try (FileWriter fileWriter = new FileWriter(targetLogFile, true);
-             PrintWriter writer = new PrintWriter(fileWriter)) {
-            writer.printf("[%s]", dateTime.format(formatter));
-            writer.printf("[%s]", invoice.getCustomer());
-            invoice.getProductSet().forEach(x -> writer.printf("[%s]", x));
-            writer.print("\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void createLogs(String message) throws IOException {
+        final Logger logger = Logger.getLogger(ShopService.class.getName());
+        FileHandler fh = new FileHandler("logger.txt", true);
+        SimpleFormatter sf = new SimpleFormatter();
+        fh.setFormatter(sf);
+        logger.addHandler(fh);
+        logger.log(Level.INFO, "Все в порядке, заказы есть");
+        logger.info(message);
+        fh.close();
     }
 }

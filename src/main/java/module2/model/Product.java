@@ -1,14 +1,13 @@
 package module2.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-@AllArgsConstructor
 @Getter
 @Setter
 
-public class Product {
-    private String series, screenType;
-    private int price;
+public abstract class Product {
+    protected String series;
+    protected String screenType;
+    protected int price;
 }

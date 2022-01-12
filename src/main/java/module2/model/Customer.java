@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.ToString;
 
 @ToString
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
 
 public class Customer {
     private int id;
