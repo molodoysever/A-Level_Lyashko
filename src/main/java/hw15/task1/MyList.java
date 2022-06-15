@@ -1,4 +1,4 @@
-package hw15_1.task1;
+package hw15.task1;
 
 import lombok.Getter;
 import lombok.Setter;

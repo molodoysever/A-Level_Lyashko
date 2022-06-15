@@ -1,4 +1,4 @@
-package hw15_1.task2;
+package hw15.task2;
 
 import java.util.Comparator;
 
