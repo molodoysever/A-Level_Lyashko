@@ -35,6 +35,7 @@ public class PersonService {
         return new Customer(id, getRandomEmail(), random.nextInt(minAge, maxAge));
     }
 
+
     private String getRandomEmail() {
         StringBuilder stringBuilder = new StringBuilder();
         String string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
