@@ -1,0 +1,11 @@
+type,series,model,diagonal,screen type,country,price
+Telephone,S-10,Samsung,none,QLED,none,200
+Telephone,Note-2,Redmi,none,OLED,none,550
+Telephone,iPhone-12,Apple,none,Retina,China,1000
+Telephone,Aboba,Meizu,none,XLED,none,228
+Telephone,Autotune,JS,none,LED,none,420
+Television,RTI-14,none,25,LED,China,1500
+Television,32-8,Samsung,85,AMALED,China,5000
+Television,NFT-666,none,65,OLED,China,122
+Television,XEX-3,none,12,GLED,China,20
+Television,FTB-11,none,19,LED,Afrika,300
